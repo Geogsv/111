@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ru" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Загрузка изображений - GeoCode</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container mt-4 mb-5">
+        <!-- Шапка с приветствием и выходом -->
+         <div class="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom border-secondary">
+            <h1 class="h4 text-body-secondary">Добро пожаловать, <strong class="text-light">{{ .username }}</strong>!</h1>
+            <!-- Форма выхода -->
+            <form action="/logout" method="post">
+                <!-- CSRF поле УДАЛЕНО -->
+                <button type="submit" class="btn btn-sm btn-outline-secondary">Выйти</button>
+            </form>
+        </div>
+
+        <!-- Форма загрузки -->
+        <div class="card mb-4 shadow-sm">
+            <div class="card-header">
+                <h2 class="h5 mb-0">Загрузка изображений</h2>
+            </div>
+            <div class="card-body">
+                <p class="card-text text-body-secondary">
+                    Выберите до 10 изображений (JPEG, PNG, GIF). Макс. размер файла: 10 МБ. Все метаданные (EXIF, GPS и т.д.) будут удалены.
+                    Для каждого успешно загруженного файла вы получите уникальную одноразовую ссылку.
+                </p>
+                <form action="/upload" method="post" enctype="multipart/form-data">
+                    <!-- CSRF поле УДАЛЕНО -->
+                    <div class="mb-3">
+                        <label for="imagefiles" class="form-label visually-hidden">Выберите файлы:</label>
+                        <input class="form-control form-control-lg" type="file" id="imagefiles" name="imagefiles" accept="image/jpeg, image/png, image/gif" required multiple>
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Загрузить и получить ссылки</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Результаты загрузки (из Flash сообщений) -->
+        <div class="upload-results">
+            {{/* Отображаем заголовок только если есть ошибки ИЛИ успешные результаты */}}
+            {{ if or .errors .successResults }}
+                <h3 class="h5 mb-3">Результаты последней загрузки:</h3>
+            {{ end }}
+
+            {{/* Вывод ошибок (без изменений) */}}
+            {{ if .errors }}
+            <div class="alert alert-danger small mb-3" role="alert">
+                 <strong class="d-block mb-2">Произошли ошибки:</strong>
+                 <ul class="mb-0"> {{/* Убрали лишний отступ у списка */}}
+                    {{ range .errors }}
+                        <li>{{ . }}</li>
+                    {{ end }}
+                </ul>
+            </div>
+            {{ end }}
+
+            {{/* === Начало: Вывод успешных результатов === */}}
+            {{ if .successResults }}
+             <div class="alert alert-success small mb-3" role="alert">
+                <strong class="d-block mb-2">Успешно загружено:</strong>
+                {{/* Используем list-group для лучшего вида */}}
+                <ul class="list-group list-group-flush upload-success-list"> {{/* Добавили класс */}}
+                    {{ range $index, $result := .successResults }}
+                        <li class="list-group-item d-flex align-items-center bg-transparent border-secondary px-0 py-2"> {{/* Стили для элемента списка */}}
+                            {{/* Миниатюра */}}
+                            <img src="/preview/{{ $result.AccessToken }}"
+                                 alt="Preview"
+                                 class="img-thumbnail me-3 upload-preview-thumb" {{/* Добавили класс */}}
+                                 loading="lazy" {{/* Ленивая загрузка превью */}}
+                                 onerror="this.style.display='none'; this.nextElementSibling.style.display='block';" {{/* Скрыть если ошибка загрузки */}}
+                                 >
+                            {{/* Запасной блок, если картинка не загрузилась */}}
+                            <div class="upload-preview-placeholder me-3" style="display: none;">Нет превью</div>
+
+                            {{/* Имя файла и ссылка */}}
+                            <div class="flex-grow-1">
+                                <div class="fw-bold mb-1 upload-original-name" title="{{ $result.OriginalFilename }}">
+                                    {{ $result.OriginalFilename }}
+                                </div>
+                                <label for="success-url-{{$index}}" class="visually-hidden">Ссылка для просмотра:</label>
+                                <div class="input-group input-group-sm">
+                                    <input type="text" id="success-url-{{$index}}" class="form-control form-control-sm" value="{{ $result.ViewURL }}" readonly>
+                                    <button class="btn btn-outline-secondary btn-sm" type="button" onclick="copyToClipboard('success-url-{{$index}}', this)">Копировать</button>
+                                </div>
+                            </div>
+                        </li>
+                    {{ end }}
+                </ul>
+            </div>
+
+            {{/* === НАЧАЛО: Новый блок для списка всех ссылок === */}}
+            <div class="mt-4"> {{/* Добавляем отступ сверху */}}
+                <h4 class="h6 mb-2">Все ссылки одним списком:</h4>
+                <textarea id="all-links-textarea" class="form-control form-control-sm" rows="5" readonly>{{ range .successResults }}{{ .ViewURL }}
+{{end}}</textarea> {{/* Важно: перенос строки внутри range для вывода каждой ссылки на новой строке */}}
+                {{/* Опционально: кнопка для копирования всего списка */}}
+                <button class="btn btn-sm btn-outline-secondary mt-2" type="button" onclick="copyAllLinks('all-links-textarea', this)">Копировать все ссылки</button>
+            </div>
+            {{/* === КОНЕЦ: Новый блок для списка всех ссылок === */}}
+
+            {{ end }}
+            {{/* === Конец: Вывод успешных результатов === */}}
+        </div>
+
+        <footer class="app-footer text-center">
+            © 2025 by GeoCode
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    {{/* Скрипт для кнопки "Копировать" */}}
+    <script>
+        function copyToClipboard(elementId, button) {
+            const copyText = document.getElementById(elementId);
+            copyText.select();
+            copyText.setSelectionRange(0, 99999); // For mobile devices
+            try {
+                document.execCommand('copy');
+                button.textContent = 'Скопировано!';
+                button.classList.remove('btn-outline-secondary');
+                button.classList.add('btn-outline-success');
+                setTimeout(() => {
+                    button.textContent = 'Копировать';
+                    button.classList.remove('btn-outline-success');
+                    button.classList.add('btn-outline-secondary');
+                }, 2000); // Сбросить текст кнопки через 2 секунды
+            } catch (err) {
+                alert('Ошибка: Не удалось скопировать ссылку.');
+            }
+             // Снимаем выделение
+            window.getSelection().removeAllRanges();
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ru" data-bs-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{{ .title }} - GeoCode</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <!-- Иконки Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+</head>
+<body class="d-flex align-items-center py-4">
+    <main class="container col-lg-6 col-md-8 mx-auto">
+        <div class="card shadow-sm p-4 p-md-5">
+            <div class="text-center">
+                <i class="bi bi-shield-lock-fill" style="font-size: 3rem; color: var(--bs-primary);"></i>
+                <h1 class="h3 my-3 fw-normal">Одноразовый просмотр</h1>
+                <p class="lead text-body-secondary">Вы перешли по ссылке для одноразового просмотра изображения.</p>
+                <p class="fw-bold text-warning">ВНИМАНИЕ: После нажатия кнопки "Просмотреть", изображение будет показано один раз, а ссылка станет недействительной навсегда.</p>
+                <hr class="my-4">
+                <form action="/view/{{ .token }}" method="post">
+                    <!-- CSRF поле УДАЛЕНО -->
+                    <button type="submit" class="btn btn-primary btn-lg w-100">Просмотреть изображение</button>
+                    <p class="mt-4 text-body-secondary small">Если вы не хотите просматривать или попали сюда случайно, просто закройте эту страницу.</p>
+                </form>
+            </div>
+        </div>
+        <footer class="app-footer text-center mt-4">
+             © 2025 by GeoCode
+        </footer>
+    </main>
+     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

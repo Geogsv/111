@@ -1,0 +1,49 @@
+version: '3.8'
+
+services:
+  imagecleaner:
+    build: .
+    container_name: imagecleaner_app
+    # Порты больше НЕ выставляются наружу напрямую
+    # ports:
+    #   - "80:8080"
+    env_file:
+      - .env
+    restart: always
+    volumes:
+      # Именованный том для персистентности БД
+      - imagecleaner_data:/app/data # Изменим путь для БД для ясности
+      # Именованный том для персистентности загрузок
+      - imagecleaner_uploads:/app/uploads
+    networks:
+      - app_network # Используем общую сеть
+
+  nginx:
+    image: nginx:1.25-alpine # Используем конкретную версию Alpine
+    container_name: imagecleaner_nginx
+    restart: always
+    ports:
+      - "80:80" # Nginx слушает порт 80 хоста
+      # - "443:443" # Раскомментируйте для HTTPS
+    volumes:
+      # Монтируем конфиг Nginx (только чтение)
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # Монтируем статику (только чтение)
+      - ./web/static:/usr/share/nginx/html/static:ro
+      # --- ОПЦИОНАЛЬНО: Монтируем кастомные страницы ошибок ---
+      # - ./web/error_pages:/usr/share/nginx/html/error_pages:ro
+      # --- ОПЦИОНАЛЬНО: Монтируем сертификаты для HTTPS ---
+      # - ./certs:/etc/nginx/certs:ro
+    depends_on:
+      - imagecleaner # Nginx зависит от Go-приложения
+    networks:
+      - app_network # Используем общую сеть
+
+volumes:
+  imagecleaner_data: # Именованный том для данных (БД)
+  imagecleaner_uploads: # Именованный том для загрузок
+
+networks:
+  app_network: # Определяем сеть для взаимодействия контейнеров
+    driver: bridge
+# --- КОНЕЦ ФАЙЛА docker-compose.yml ---
