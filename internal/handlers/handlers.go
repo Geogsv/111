@@ -21,7 +21,6 @@ import (
 	"github.com/gin-contrib/sessions" // Сессии все еще нужны для аутентификации
 	"github.com/gin-gonic/gin"
 )
-
 // Константы для ограничений загрузки
 const MaxUploadSize = 10 << 20 // 10 МБ
 const MaxFiles = 10            // Максимальное количество файлов
